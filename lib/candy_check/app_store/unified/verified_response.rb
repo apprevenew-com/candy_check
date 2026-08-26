@@ -149,9 +149,10 @@ module CandyCheck
         def pending_renewal_transaction(oti, product_id)
           return unless subscription?
 
-          pending_renewal_info.find do |t|
-            t.original_transaction_id == oti || t.product_id == product_id
-          end
+          # exact OTI match first: with several renewal infos in one response, an earlier
+          # element's product_id must not shadow a later element's exact match
+          pending_renewal_info.find { |t| t.original_transaction_id == oti } ||
+            pending_renewal_info.find { |t| t.product_id == product_id }
         end
 
         # @return [Unified::InAppReceipt] by original_transaction_id

@@ -189,5 +189,15 @@ describe CandyCheck::AppStore::Unified::VerifiedResponse do
       subject.pending_renewal_transaction('1000800359115195', nil).must_be_instance_of(in_app_class)
       subject.pending_renewal_transaction('1000800359115195', nil).is_in_billing_retry_period.must_equal 0
     end
+
+    it '#pending_renewal_transaction prefers an exact OTI match over an earlier product_id match' do
+      renewal = subject.pending_renewal_transaction('1000800359115199', 'com.app.product_id')
+      renewal.original_transaction_id.must_equal '1000800359115199'
+    end
+
+    it '#pending_renewal_transaction falls back to product_id when the OTI is unknown' do
+      renewal = subject.pending_renewal_transaction('unknown', 'com.app.alt.product_id')
+      renewal.original_transaction_id.must_equal '1000800359115199'
+    end
   end
 end
