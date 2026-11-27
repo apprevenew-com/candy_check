@@ -25,7 +25,7 @@ module CandyCheck
       # The message of the failure
       # @return [String]
       def message
-        error.message || 'Unknown error'
+        error&.message || 'Unknown error'
       end
     end
   end
