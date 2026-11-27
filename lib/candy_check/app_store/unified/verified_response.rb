@@ -70,7 +70,7 @@ module CandyCheck
 
         # group by subscription_group_identifier or by original_transaction_id or by product_id
         def grouped_receipts
-          @grouped_receipts ||= raw_grouped_receipts.map do |id, receipts|
+          @grouped_receipts ||= raw_grouped_receipts.each_value do |receipts|
             receipts.sort_by! do |receipt|
               if receipt.attributes['storefront'] # V2
                 receipt.purchase_date || receipt.expires_date
@@ -80,9 +80,7 @@ module CandyCheck
               end
             end
             fix_upgraded_receipts_order!(receipts) if receipts.last.upgraded?
-
-            { id => receipts }
-          end.reduce({}, :merge)
+          end
         end
 
         def fix_upgraded_receipts_order!(receipts)
@@ -128,15 +126,9 @@ module CandyCheck
           groups
         end
 
+        # latest_receipt_info, then the in_app receipts it does not hold (see {#same_receipts?})
         def total_receipts
-          return @total_receipts if @total_receipts
-
-          @total_receipts = []
-          @total_receipts += latest_receipt_info
-          not_added_in_app_receipts = in_app.select { |r1| @total_receipts.find { |r2| same_receipts?(r1, r2) }.nil? }
-          @total_receipts += not_added_in_app_receipts if not_added_in_app_receipts.present?
-
-          @total_receipts
+          @total_receipts ||= latest_receipt_info + in_app_receipts_not_in_latest
         end
 
         def same_receipts?(r1, r2)
@@ -163,6 +155,31 @@ module CandyCheck
         end
 
         private
+
+        # The in_app receipts no latest_receipt_info receipt matches by {#same_receipts?}. Instead of comparing
+        # every pair it keeps three sets built from the latest receipts: a receipt with a line item id matches
+        # the same id, or the transaction id of a receipt without one; a receipt without a line item id
+        # matches any receipt with the same transaction id.
+        def in_app_receipts_not_in_latest
+          return in_app if latest_receipt_info.empty? || in_app.empty?
+
+          line_item_ids = Set.new
+          transaction_ids = Set.new
+          transaction_ids_without_line_item = Set.new
+          latest_receipt_info.each do |receipt|
+            line_item_id = receipt.web_order_line_item_id
+            transaction_id = receipt.transaction_id
+            transaction_ids << transaction_id
+            line_item_id.present? ? line_item_ids << line_item_id : transaction_ids_without_line_item << transaction_id
+          end
+
+          in_app.reject do |receipt|
+            line_item_id = receipt.web_order_line_item_id
+            next transaction_ids.include?(receipt.transaction_id) unless line_item_id.present?
+
+            line_item_ids.include?(line_item_id) || transaction_ids_without_line_item.include?(receipt.transaction_id)
+          end
+        end
 
         def fetch_in_app_info(response)
           in_app_array = response.dig('receipt', 'in_app')

@@ -29,7 +29,19 @@ module CandyCheck
         val == 'true'
       end
 
+      # Parses the field once per instance: the attributes are not expected to change after construction.
+      # The cache is created on the first read, so an instance nobody read a date from carries no extra state;
+      # a frozen instance cannot keep one and parses on every read.
       def read_datetime_from_string(field)
+        return parse_datetime(field) if frozen?
+
+        cache = (@datetimes ||= {})
+        return cache[field] if cache.key?(field)
+
+        cache[field] = parse_datetime(field)
+      end
+
+      def parse_datetime(field)
         (val = read(field)) && DateTime.parse(val)
       end
 
