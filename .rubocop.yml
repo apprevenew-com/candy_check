@@ -1,4 +1,9 @@
+inherit_from: .rubocop_todo.yml
+
 AllCops:
+  NewCops: enable
+  SuggestExtensions: false
+  TargetRubyVersion: 4.0
   Exclude:
     - 'spec/support/*'
     - 'bin/**/*'
@@ -9,8 +14,8 @@ Style/FrozenStringLiteralComment:
   Enabled: false
 Style/NumericPredicate:
   Enabled: false
-Lint/UnifiedInteger:
-  Enabled: false
+Style/OpenStructUse:
+  Enabled: true
 Style/PercentLiteralDelimiters:
   PreferredDelimiters:
     default: ()
@@ -19,9 +24,6 @@ Style/PercentLiteralDelimiters:
 Metrics/BlockLength:
   Exclude:
     - 'spec/**/*'
-Security/MarshalLoad:
-  Exclude:
-    - 'lib/candy_check/play_store/discovery_repository.rb'
 Style/Encoding:
   Enabled: false
 Style/ExpandPathArguments:

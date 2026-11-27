@@ -1,3 +1,6 @@
+require 'active_support'
+require 'active_support/core_ext/object/blank'
+
 require 'candy_check/version'
 require 'candy_check/utils'
 require 'candy_check/app_store'

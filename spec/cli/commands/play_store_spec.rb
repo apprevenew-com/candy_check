@@ -7,43 +7,37 @@ describe CandyCheck::CLI::Commands::PlayStore do
   let(:package)    { 'the_package' }
   let(:product_id) { 'the_product' }
   let(:token)      { 'the_token' }
-  let(:options) do
-    {
-      application_name: 'YourApplication',
-      application_version: '1.0',
-      issuer: 'abcdefg@developer.gserviceaccount.com',
-      key_file: 'local/google.p12',
-      key_secret: 'notasecret'
-    }
-  end
+  let(:options)    { { 'json_key_file' => 'local/google.json' } }
+  let(:authorization) { Object.new }
 
   before do
-    stub = proc do |*args|
-      @verifier = DummyPlayStoreVerifier.new(*args)
+    authorize = proc do |json_key_file|
+      @json_key_file = json_key_file
+      authorization
     end
-    CandyCheck::PlayStore::Verifier.stub :new, stub do
-      run_command!
+    build = proc do |**options|
+      @verifier = DummyPlayStoreVerifier.new(**options)
+    end
+    CandyCheck::PlayStore.stub :authorization, authorize do
+      CandyCheck::PlayStore::Verifier.stub :new, build do
+        run_command!
+      end
     end
   end
 
   it 'calls and outputs the verifier' do
-    options.each do |k, v|
-      @verifier.config.public_send(k).must_equal v
-    end
-    @verifier.arguments.must_equal [package, product_id, token]
-    out.must_be 'Hash:', result: :stubbed
+    _(@json_key_file).must_equal 'local/google.json'
+    _(@verifier.authorization).must_be_same_as authorization
+    _(@verifier.arguments).must_equal({ package_name: package, product_id: product_id, token: token })
+    _(out.lines).must_equal ['Hash:', { result: :stubbed }]
   end
 
   private
 
-  DummyPlayStoreVerifier = Struct.new(:config) do
-    attr_reader :arguments, :booted
+  DummyPlayStoreVerifier = Struct.new(:authorization, keyword_init: true) do
+    attr_reader :arguments
 
-    def boot!
-      @booted = true
-    end
-
-    def verify(*arguments)
+    def verify_product_purchase(**arguments)
       @arguments = arguments
       { result: :stubbed }
     end

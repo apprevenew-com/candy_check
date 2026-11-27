@@ -26,110 +26,107 @@ describe CandyCheck::AppStore::Unified::InAppReceipt do
   RECEIPT
 
   it 'returns quantity' do
-    subject.quantity.must_equal 1
+    _(subject.quantity).must_equal 1
   end
 
   it 'returns product_id' do
-    subject.product_id.must_equal 'com.app.product'
+    _(subject.product_id).must_equal 'com.app.product'
   end
 
   it 'returns transaction_id' do
-    subject.transaction_id.must_equal '1000000318232140'
+    _(subject.transaction_id).must_equal '1000000318232140'
   end
 
   it 'returns original_transaction_id' do
-    subject.original_transaction_id.must_equal '1000000359615195'
+    _(subject.original_transaction_id).must_equal '1000000359615195'
   end
 
   it 'returns purchase_date' do
     expected = DateTime.new(2017, 7, 25, 0, 55, 46)
-    subject.purchase_date.must_equal expected
+    _(subject.purchase_date).must_equal expected
   end
 
   it 'returns original_purchase_date' do
     expected = DateTime.new(2017, 7, 25, 0, 15, 46)
-    subject.original_purchase_date.must_equal expected
+    _(subject.original_purchase_date).must_equal expected
   end
 
   it 'returns expires_date' do
     expected = DateTime.new(2017, 12, 14, 16, 34, 33)
-    subject.expires_date.must_equal expected
+    _(subject.expires_date).must_equal expected
   end
 
   it 'returns expiration_intent' do
-    subject.expiration_intent.must_equal 4
+    _(subject.expiration_intent).must_equal 4
   end
 
   it 'returns expiration_intent_string' do
-    expected = 'Product was not available for purchase at the time of renewal.'
-    subject.expiration_intent_string.must_equal expected
+    _(subject.expiration_intent_string).must_equal 'unavailable_product'
   end
 
   it 'returns is_in_billing_retry_period' do
-    subject.is_in_billing_retry_period.must_equal 0
+    _(subject.is_in_billing_retry_period).must_equal 0
   end
 
   it 'check in_billing_retry_period?' do
-    subject.in_billing_retry_period?.must_equal false
+    _(subject.in_billing_retry_period?).must_equal false
   end
 
   it 'returns is_trial_period' do
-    subject.is_trial_period.must_equal false
+    _(subject.is_trial_period).must_equal false
   end
 
   it 'check trial_period?' do
-    subject.trial_period?.must_equal false
+    _(subject.trial_period?).must_equal false
   end
 
   it 'returns cancellation_date' do
     expected = DateTime.new(2017, 7, 27, 0, 55, 46)
-    subject.cancellation_date.must_equal expected
+    _(subject.cancellation_date).must_equal expected
   end
 
   it 'returns cancellation_reason string' do
-    expected = 'Customer canceled their transaction due to an actual' \
-               ' or perceived issue within your app.'
-    subject.cancellation_reason_string.must_equal expected
+    _(subject.cancellation_reason_string).must_equal 'app_issue'
   end
 
   it 'returns cancellation_reason' do
     expected = 1
-    subject.cancellation_reason.must_equal expected
+    _(subject.cancellation_reason).must_equal expected
   end
 
   it 'returns app_item_id' do
-    subject.app_item_id.must_equal 0
+    _(subject.app_item_id).must_equal 0
   end
 
   it 'returns version_external_identifier' do
-    subject.version_external_identifier.must_equal 3
+    _(subject.version_external_identifier).must_equal 3
   end
 
   it 'returns web_order_line_item_id' do
-    subject.web_order_line_item_id.must_equal '1000000037216020'
+    _(subject.web_order_line_item_id).must_equal '1000000037216020'
   end
 
   it 'returns auto_renew_status' do
-    subject.auto_renew_status.must_equal 0
+    _(subject.auto_renew_status).must_equal 0
   end
 
   it 'check will_renew?' do
-    subject.will_renew?.must_equal false
+    _(subject.will_renew?).must_equal false
   end
 
   it 'returns price_consent_status' do
-    subject.price_consent_status.must_equal 1
+    _(subject.price_consent_status).must_equal 1
   end
 
   it 'check price_consented?' do
-    subject.price_consented?.must_equal true
+    _(subject.price_consented?).must_equal true
   end
 
   it 'check expired?' do
-    subject.expired?.must_equal true
+    _(subject.expired?).must_equal true
   end
 
   it 'cancelled?' do
-    subject.cancelled?.must_equal true
+    _(subject.cancelled?).must_equal true
   end
 end
