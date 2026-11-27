@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'candy_check'
 require 'candy_check/cli'
 

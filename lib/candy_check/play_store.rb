@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'google/apis/androidpublisher_v3'
 
 require 'candy_check/play_store/voided_purchases'

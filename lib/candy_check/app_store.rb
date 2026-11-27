@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'candy_check/app_store/client'
 require 'candy_check/app_store/config'
 require 'candy_check/app_store/receipt'

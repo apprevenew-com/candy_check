@@ -11,7 +11,7 @@ AllCops:
 Style/Documentation:
   Enabled: false
 Style/FrozenStringLiteralComment:
-  Enabled: false
+  Enabled: true
 Style/NumericPredicate:
   Enabled: false
 Style/OpenStructUse:

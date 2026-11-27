@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'candy_check/app_store/unified/app_receipt'
 require 'candy_check/app_store/unified/in_app_receipt'
 require 'candy_check/app_store/unified/verification'
