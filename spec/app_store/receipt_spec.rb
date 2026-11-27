@@ -114,4 +114,8 @@ describe CandyCheck::AppStore::Receipt do
   it 'returns an equal date on a second read' do
     _(subject.purchase_date).must_equal subject.purchase_date
   end
+
+  it 'parses a date once' do
+    _(subject.purchase_date).must_be_same_as subject.purchase_date
+  end
 end

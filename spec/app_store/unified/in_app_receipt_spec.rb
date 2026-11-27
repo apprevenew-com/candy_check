@@ -143,4 +143,18 @@ describe CandyCheck::AppStore::Unified::InAppReceipt do
   it 'returns an equal date on a second read' do
     _(subject.purchase_date).must_equal subject.purchase_date
   end
+
+  it 'parses a date once' do
+    _(subject.purchase_date).must_be_same_as subject.purchase_date
+  end
+
+  it 'keeps no parsed dates until one is read' do
+    _(subject.instance_variables).must_equal [:@attributes]
+  end
+
+  it 'reads dates from a frozen receipt' do
+    frozen = subject.class.new(attributes).freeze
+    _(frozen.purchase_date).must_equal subject.purchase_date
+    _(frozen.purchase_date).must_equal subject.purchase_date
+  end
 end
