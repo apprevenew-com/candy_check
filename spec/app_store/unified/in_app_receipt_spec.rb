@@ -131,4 +131,16 @@ describe CandyCheck::AppStore::Unified::InAppReceipt do
   it 'cancelled?' do
     _(subject.cancelled?).must_equal true
   end
+
+  it 'returns nil for a date that is not in the attributes' do
+    _(subject.class.new({}).purchase_date).must_be_nil
+  end
+
+  it 'returns the value itself for a false date' do
+    _(subject.class.new('expires_date' => false).expires_date).must_be_false
+  end
+
+  it 'returns an equal date on a second read' do
+    _(subject.purchase_date).must_equal subject.purchase_date
+  end
 end

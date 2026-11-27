@@ -202,4 +202,232 @@ describe CandyCheck::AppStore::Unified::VerifiedResponse do
       _(renewal.original_transaction_id).must_equal '1000800359115199'
     end
   end
+
+  describe '#total_receipts' do
+    let(:response) do
+      { 'environment' => 'Production', 'receipt' => { 'in_app' => in_app }, 'latest_receipt_info' => latest }
+    end
+    let(:latest) { [] }
+    let(:in_app) { [] }
+
+    def raw(transaction_id, web_order_line_item_id = :missing)
+      { 'transaction_id' => transaction_id }.tap do |attributes|
+        attributes['web_order_line_item_id'] = web_order_line_item_id unless web_order_line_item_id == :missing
+      end
+    end
+
+    def total
+      subject.total_receipts.map(&:attributes)
+    end
+
+    describe 'when both sides carry a web_order_line_item_id' do
+      let(:latest) { [raw('A', '1')] }
+      let(:in_app) { [raw('B', '1'), raw('A', '2')] }
+
+      it 'drops the in_app receipt with the same id and keeps one with another id' do
+        _(total).must_equal [raw('A', '1'), raw('A', '2')]
+      end
+    end
+
+    describe 'when only the in_app receipt has no web_order_line_item_id' do
+      let(:latest) { [raw('A', '1')] }
+      let(:in_app) { [raw('A'), raw('B')] }
+
+      it 'matches by transaction_id' do
+        _(total).must_equal [raw('A', '1'), raw('B')]
+      end
+    end
+
+    describe 'when only the latest receipt has no web_order_line_item_id' do
+      let(:latest) { [raw('A')] }
+      let(:in_app) { [raw('A', '1'), raw('B', '2')] }
+
+      it 'matches by transaction_id' do
+        _(total).must_equal [raw('A'), raw('B', '2')]
+      end
+    end
+
+    describe 'when neither side has a web_order_line_item_id' do
+      let(:latest) { [raw('A')] }
+      let(:in_app) { [raw('A'), raw('B')] }
+
+      it 'matches by transaction_id' do
+        _(total).must_equal [raw('A'), raw('B')]
+      end
+    end
+
+    describe 'when the in_app web_order_line_item_id is blank' do
+      let(:latest) { [raw('A', '5'), raw('B', '6'), raw('C', '7')] }
+      let(:in_app) { [raw('A', ''), raw('B', ' '), raw('C', nil), raw('D', '')] }
+
+      it 'counts it as missing and matches by transaction_id' do
+        _(total).must_equal [raw('A', '5'), raw('B', '6'), raw('C', '7'), raw('D', '')]
+      end
+    end
+
+    describe 'when the latest web_order_line_item_id is blank' do
+      let(:latest) { [raw('A', ''), raw('B', ' '), raw('C', nil)] }
+      let(:in_app) { [raw('A', '1'), raw('B', '2'), raw('C', '3'), raw('D', '4')] }
+
+      it 'counts it as missing and matches by transaction_id' do
+        _(total).must_equal [raw('A', ''), raw('B', ' '), raw('C', nil), raw('D', '4')]
+      end
+    end
+
+    describe 'when the transaction_id is nil on both sides' do
+      let(:latest) { [raw(nil)] }
+      let(:in_app) { [raw(nil), {}] }
+
+      it 'matches nil with nil' do
+        _(total).must_equal [raw(nil)]
+      end
+    end
+
+    describe 'with duplicates' do
+      let(:latest) { [raw('A', '1'), raw('A', '1')] }
+      let(:in_app) { [raw('B'), raw('B'), raw('C', '2'), raw('C', '2')] }
+
+      it 'keeps every latest receipt and every unmatched in_app receipt' do
+        _(total).must_equal [raw('A', '1'), raw('A', '1'), raw('B'), raw('B'), raw('C', '2'), raw('C', '2')]
+      end
+    end
+
+    describe 'without latest_receipt_info' do
+      let(:response) { { 'environment' => 'Production', 'receipt' => { 'in_app' => in_app } } }
+      let(:in_app) { [raw('B', '2'), raw('A')] }
+
+      it 'keeps every in_app receipt in its order' do
+        _(total).must_equal [raw('B', '2'), raw('A')]
+        _(subject.total_receipts).wont_be_same_as subject.in_app
+      end
+    end
+
+    describe 'without in_app receipts' do
+      let(:latest) { [raw('B', '2'), raw('A')] }
+
+      it 'keeps every latest receipt in its order' do
+        _(total).must_equal [raw('B', '2'), raw('A')]
+        _(subject.total_receipts).wont_be_same_as subject.latest_receipt_info
+      end
+    end
+
+    describe 'the returned array' do
+      let(:latest) { [raw('B', '2'), raw('A', '1')] }
+      let(:in_app) { [raw('D'), raw('A', '1'), raw('C', '3')] }
+
+      it 'lists latest_receipt_info first, then the unmatched in_app receipts in their order' do
+        _(total).must_equal [raw('B', '2'), raw('A', '1'), raw('D'), raw('C', '3')]
+      end
+
+      it 'holds the receipt objects of the source collections' do
+        _(subject.total_receipts.first).must_be_same_as subject.latest_receipt_info.first
+        _(subject.total_receipts.last).must_be_same_as subject.in_app.last
+      end
+
+      it 'leaves the source collections as they were' do
+        subject.total_receipts
+        _(subject.latest_receipt_info.map(&:attributes)).must_equal latest
+        _(subject.in_app.map(&:attributes)).must_equal in_app
+      end
+
+      it 'is the same array on a second call' do
+        _(subject.total_receipts).must_be_same_as subject.total_receipts
+      end
+    end
+
+    describe 'when no in_app receipt is left' do
+      let(:latest) { [raw('A', '1')] }
+      let(:in_app) { [raw('A', '1')] }
+
+      it 'is not the latest_receipt_info array itself' do
+        _(total).must_equal latest
+        _(subject.total_receipts).wont_be_same_as subject.latest_receipt_info
+      end
+    end
+  end
+
+  describe '#grouped_receipts' do
+    let(:response) { { 'environment' => 'Production', 'receipt' => {}, 'latest_receipt_info' => latest } }
+
+    def raw(transaction_id, original_transaction_id, **attributes)
+      attributes.transform_keys(&:to_s).merge(
+        'transaction_id' => transaction_id, 'original_transaction_id' => original_transaction_id
+      )
+    end
+
+    def grouped
+      subject.grouped_receipts.transform_values { |receipts| receipts.map(&:transaction_id) }
+    end
+
+    describe 'grouping' do
+      let(:latest) do
+        [
+          raw('1', 'O1', subscription_group_identifier: 'G1', expires_date: '2024-02-01 00:00:00 Etc/GMT'),
+          raw('2', 'O3', expires_date: '2024-02-01 00:00:00 Etc/GMT'),
+          raw('3', 'O2', subscription_group_identifier: 'G1', expires_date: '2024-03-01 00:00:00 Etc/GMT'),
+          raw('4', 'O4', web_order_line_item_id: '10', product_id: 'p1', expires_date: '2024-02-01 00:00:00 Etc/GMT'),
+          raw('5', 'O5', web_order_line_item_id: '11', product_id: 'p1', expires_date: '2024-03-01 00:00:00 Etc/GMT')
+        ]
+      end
+
+      it 'keys each group by the original_transaction_id of its first receipt, in order of appearance' do
+        _(grouped).must_equal({ 'O1' => %w(1 3), 'O3' => %w(2), 'O4' => %w(4 5) })
+        _(subject.grouped_receipts.keys).must_equal %w(O1 O3 O4)
+      end
+
+      it 'returns a group by its key' do
+        _(subject.subscription_receipts_by('O1').map(&:transaction_id)).must_equal %w(1 3)
+        _(subject.subscription_receipts_by('O2')).must_be_nil
+      end
+
+      it 'is the same hash on a second call' do
+        _(subject.grouped_receipts).must_be_same_as subject.grouped_receipts
+      end
+    end
+
+    describe 'sorting receipts without a storefront' do
+      let(:latest) do
+        [
+          raw('1', 'O1', purchase_date: '2024-01-01 00:00:00 Etc/GMT', expires_date: '2024-03-01 00:00:00 Etc/GMT'),
+          raw('2', 'O1', purchase_date: '2024-02-01 00:00:00 Etc/GMT', expires_date: '2024-02-15 00:00:00 Etc/GMT'),
+          raw('3', 'O1', purchase_date: '2024-02-20 00:00:00 Etc/GMT')
+        ]
+      end
+
+      it 'orders by expires_date and falls back to purchase_date' do
+        _(grouped).must_equal({ 'O1' => %w(2 3 1) })
+      end
+    end
+
+    describe 'sorting receipts with a storefront' do
+      let(:latest) do
+        [
+          raw('1', 'O1', storefront: 'USA', expires_date: '2024-01-20 00:00:00 Etc/GMT'),
+          raw('2', 'O1', storefront: 'USA',
+                         purchase_date: '2024-02-01 00:00:00 Etc/GMT', expires_date: '2024-02-15 00:00:00 Etc/GMT'),
+          raw('3', 'O1', storefront: 'USA',
+                         purchase_date: '2024-01-01 00:00:00 Etc/GMT', expires_date: '2024-03-01 00:00:00 Etc/GMT')
+        ]
+      end
+
+      it 'orders by purchase_date and falls back to expires_date' do
+        _(grouped).must_equal({ 'O1' => %w(3 1 2) })
+      end
+    end
+
+    describe 'when the last receipt of a group is upgraded' do
+      let(:latest) do
+        [
+          raw('1', 'O1', purchase_date: '2024-01-01 00:00:00 Etc/GMT', expires_date: '2024-02-01 00:00:00 Etc/GMT'),
+          raw('2', 'O1', purchase_date: '2024-01-10 00:00:00 Etc/GMT', expires_date: '2024-02-10 00:00:00 Etc/GMT'),
+          raw('3', 'O1', purchase_date: '2024-01-11 00:00:00 Etc/GMT', expires_date: '2024-03-01 00:00:00 Etc/GMT',
+                         is_upgraded: 'true')
+        ]
+      end
+
+      it 'moves the receipt before it to the end' do
+        _(grouped).must_equal({ 'O1' => %w(1 3 2) })
+      end
+    end
+  end
 end

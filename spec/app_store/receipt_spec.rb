@@ -106,4 +106,12 @@ describe CandyCheck::AppStore::Receipt do
       _(subject.cancellation_date).must_equal expected
     end
   end
+
+  it 'returns the value itself for a false date' do
+    _(CandyCheck::AppStore::Receipt.new('expires_date' => false).expires_date).must_be_false
+  end
+
+  it 'returns an equal date on a second read' do
+    _(subject.purchase_date).must_equal subject.purchase_date
+  end
 end
