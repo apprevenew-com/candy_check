@@ -1,24 +1,19 @@
-require 'coveralls'
-Coveralls.wear!
+# frozen_string_literal: true
 
 require 'candy_check'
 require 'candy_check/cli'
 
 require 'minitest/autorun'
-require 'minitest/around/spec'
+require 'minitest/mock'
 
 require 'webmock/minitest'
 
 require 'timecop'
 
-require_relative 'support/with_fixtures'
-require_relative 'support/with_temp_file'
 require_relative 'support/with_command'
 require_relative 'support/app_store/with_mocked_response'
 
-ENV['DEBUG'] && Google::APIClient.logger.level = Logger::DEBUG
-
-module MiniTest
+module Minitest
   module Assertions
     # The first parameter must be ```true```, not coercible to true.
     def assert_true(obj, msg = nil)

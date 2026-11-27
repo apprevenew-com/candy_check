@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe CandyCheck::AppStore::SubscriptionVerification do
@@ -13,26 +15,26 @@ describe CandyCheck::AppStore::SubscriptionVerification do
   it 'returns a verification failure for status != 0' do
     with_mocked_response('status' => 21_000) do |client, recorded|
       result = subject.call!
-      client.receipt_data.must_equal data
-      client.secret.must_equal secret
+      _(client.receipt_data).must_equal data
+      _(client.secret).must_equal secret
 
-      recorded.first.must_equal [endpoint]
+      _(recorded.first).must_equal [endpoint]
 
-      result.must_be_instance_of CandyCheck::AppStore::VerificationFailure
-      result.code.must_equal 21_000
+      _(result).must_be_instance_of CandyCheck::AppStore::VerificationFailure
+      _(result.code).must_equal 21_000
     end
   end
 
   it 'returns a verification failure when receipt is missing' do
     with_mocked_response({}) do |client, recorded|
       result = subject.call!
-      client.receipt_data.must_equal data
-      client.secret.must_equal secret
+      _(client.receipt_data).must_equal data
+      _(client.secret).must_equal secret
 
-      recorded.first.must_equal [endpoint]
+      _(recorded.first).must_equal [endpoint]
 
-      result.must_be_instance_of CandyCheck::AppStore::VerificationFailure
-      result.code.must_equal(-1)
+      _(result).must_be_instance_of CandyCheck::AppStore::VerificationFailure
+      _(result.code).must_equal(-1)
     end
   end
 
@@ -46,11 +48,11 @@ describe CandyCheck::AppStore::SubscriptionVerification do
     }
     with_mocked_response(response) do
       result = subject.call!
-      result.must_be_instance_of CandyCheck::AppStore::ReceiptCollection
-      result.receipts.must_be_instance_of Array
+      _(result).must_be_instance_of CandyCheck::AppStore::ReceiptCollection
+      _(result.receipts).must_be_instance_of Array
       last = result.receipts.last
-      last.must_be_instance_of CandyCheck::AppStore::Receipt
-      last.item_id.must_equal('some_other_id')
+      _(last).must_be_instance_of CandyCheck::AppStore::Receipt
+      _(last.item_id).must_equal('some_other_id')
     end
   end
 end

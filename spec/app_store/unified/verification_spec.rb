@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe CandyCheck::AppStore::Unified::Verification do
@@ -16,8 +18,8 @@ describe CandyCheck::AppStore::Unified::Verification do
       it 'returns a verification failure' do
         with_mocked_response('status' => 21_000, 'receipt' => {}) do
           result = subject.call!
-          result.must_be_instance_of CandyCheck::AppStore::VerificationFailure
-          result.code.must_equal 21_000
+          _(result).must_be_instance_of CandyCheck::AppStore::VerificationFailure
+          _(result.code).must_equal 21_000
         end
       end
     end
@@ -25,9 +27,9 @@ describe CandyCheck::AppStore::Unified::Verification do
 
   describe 'when validation passed successfully' do
     it 'returns instance of Unified::VerifiedResponse' do
-      with_mocked_response('status' => 0, 'receipt' => {}) do
+      with_mocked_response('status' => 0, 'receipt' => {}, 'environment' => 'Production') do
         result = subject.call!
-        result.must_be_instance_of(
+        _(result).must_be_instance_of(
           CandyCheck::AppStore::Unified::VerifiedResponse
         )
       end

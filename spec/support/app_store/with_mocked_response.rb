@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module AppStore
   module WithMockedResponse
     DummyClient = Struct.new(:response) do

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module WithCommand
   def out
     @out ||= OutRecorder.new
@@ -24,10 +26,6 @@ module WithCommand
 
     def pretty(object)
       lines << object
-    end
-
-    def must_be(*expected)
-      lines.must_equal expected
     end
   end
 end

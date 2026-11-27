@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module CandyCheck
   module PlayStore
     # Represents a failing call against the Google API server
@@ -25,7 +27,7 @@ module CandyCheck
       # The message of the failure
       # @return [String]
       def message
-        error.message || 'Unknown error'
+        error&.message || 'Unknown error'
       end
     end
   end

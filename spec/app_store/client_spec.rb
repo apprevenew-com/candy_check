@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe CandyCheck::AppStore::Client do
@@ -39,7 +41,7 @@ describe CandyCheck::AppStore::Client do
           body: response
         )
       result = subject.verify(receipt_data)
-      result.must_equal expected
+      _(result).must_equal expected
     end
 
     it 'sends JSON and parses the JSON response with a secret' do
@@ -54,7 +56,7 @@ describe CandyCheck::AppStore::Client do
           body: response
         )
       result = subject.verify(receipt_data, password)
-      result.must_equal expected
+      _(result).must_equal expected
     end
   end
 
