@@ -346,6 +346,43 @@ describe CandyCheck::AppStore::Unified::VerifiedResponse do
     end
   end
 
+  # total_receipts answers #same_receipts? with set lookups; these examples keep the two from drifting apart
+  describe '#total_receipts against #same_receipts?' do
+    let(:candidates) do
+      [:missing, nil, '', ' ', '1', '2'].product([nil, 'A', 'B']).map do |web_order_line_item_id, transaction_id|
+        { 'transaction_id' => transaction_id }.tap do |attributes|
+          attributes['web_order_line_item_id'] = web_order_line_item_id unless web_order_line_item_id == :missing
+        end
+      end
+    end
+
+    def verified_response(latest, in_app)
+      CandyCheck::AppStore::Unified::VerifiedResponse.new(
+        'environment' => 'Production', 'receipt' => { 'in_app' => in_app }, 'latest_receipt_info' => latest
+      )
+    end
+
+    it 'keeps an in_app receipt exactly when the latest receipt is not the same one' do
+      candidates.product(candidates).each do |latest, in_app|
+        response = verified_response([latest], [in_app])
+        same = response.same_receipts?(response.in_app.first, response.latest_receipt_info.first)
+
+        _(response.total_receipts.size).must_equal(same ? 1 : 2, "latest #{latest}, in_app #{in_app}")
+      end
+    end
+
+    it 'keeps the in_app receipts no latest receipt is the same as' do
+      candidates.each_slice(3) do |latest|
+        response = verified_response(latest, candidates)
+        expected = response.in_app.reject do |in_app|
+          response.latest_receipt_info.any? { |candidate| response.same_receipts?(in_app, candidate) }
+        end
+
+        _(response.total_receipts).must_equal(response.latest_receipt_info + expected, "latest #{latest}")
+      end
+    end
+  end
+
   describe '#grouped_receipts' do
     let(:response) { { 'environment' => 'Production', 'receipt' => {}, 'latest_receipt_info' => latest } }
 
